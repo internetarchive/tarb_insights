@@ -53,7 +53,7 @@ with st.expander("Edits Summary"):
 
 "## Monthly Links Edits on All Wikis"
 c = alt.Chart(bymonth).mark_bar().encode(
-  x="yearmonth(YearMonth)",
+  x="yearmonth(YearMonth):T",
   y="TotalLinks:Q",
   tooltip=["yearmonth(YearMonth)", alt.Tooltip("TotalLinks", format=",")]
 )
@@ -67,7 +67,7 @@ with st.expander("Per Month Edits"):
 selected_wikis = st.multiselect("Select Wikis to compare:", bywiki["Wiki"], default=["enwiki"])
 sw = data[data["Wiki"].isin(selected_wikis)].groupby(["Wiki", "YearMonth"]).agg("sum").reset_index()
 c = alt.Chart(sw).mark_line().encode(
-  x="YearMonth:T",
+  x="yearmonth(YearMonth):T",
   y="TotalLinks:Q",
   color="Wiki:N",
   strokeDash="Wiki:N"
