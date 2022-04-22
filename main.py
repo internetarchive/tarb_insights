@@ -54,7 +54,7 @@ cols[2].metric("Link Edits", f"{bywiki['TotalLinks'].sum():,}", f"{byday['TotalL
 with st.expander("Edits Summary"):
   st.table(pd.concat([byday.sum(numeric_only=True), byday.tail(1).sum(numeric_only=True)], axis=1, keys=["All_Time", "Last_Day"]).astype(int))
 
-"## Last 30 Days on All Wikis"
+"## Recent Daily Edits on All Wikis"
 c = alt.Chart(byday.tail(30)).mark_bar().encode(
   x=alt.X("yearmonthdate(Timestamp):T", title="Day"),
   y="TotalLinks:Q",
@@ -62,7 +62,7 @@ c = alt.Chart(byday.tail(30)).mark_bar().encode(
 )
 st.altair_chart(c, use_container_width=True)
 
-with st.expander("30 Days Edits"):
+with st.expander("Recent Daily Edits"):
   st.write(byday.tail(30))
 
 "## Monthly Links Edits on All Wikis"
@@ -88,12 +88,26 @@ c = alt.Chart(sw).mark_line().encode(
 )
 st.altair_chart(c, use_container_width=True)
 
-"## Total Links Edits on Each Wiki (Top 20)"
+"## Recent Daily Edits on Each Wiki"
+recent = data[data["Timestamp"].dt.date > lday - pd.to_timedelta("30day")]
+c = alt.Chart(recent).mark_rect().encode(
+  x=alt.X("yearmonthdate(Timestamp):T", title="Day"),
+  y="Wiki:O",
+  color="TotalLinks:Q",
+  tooltip=[alt.Tooltip("yearmonthdate(Timestamp)", title="Day"), alt.Tooltip("Wiki"), alt.Tooltip("TotalLinks", format=",")]
+).properties(
+  height=recent["Wiki"].nunique()*15
+)
+st.altair_chart(c, use_container_width=True)
+
+"## Total Links Edits on Each Wiki"
 tt = ["Wiki"] + [alt.Tooltip(f, format=",") for f in ["TotalLinks", "TotalEdits", "DeadEdits", "LiveLinks", "TagLinks", "ProactiveEdits", "ReactiveEdits", "UnknownEdits"]]
-c = alt.Chart(bywiki.sort_values(by=["TotalLinks"], ascending=False).head(20)).mark_bar().encode(
+c = alt.Chart(bywiki.sort_values(by=["TotalLinks"], ascending=False)).mark_bar().encode(
   x="TotalLinks:Q",
   y=alt.Y("Wiki:N", sort="-x"),
   tooltip=tt
+).properties(
+  height=len(bywiki)*15
 )
 st.altair_chart(c, use_container_width=True)
 
