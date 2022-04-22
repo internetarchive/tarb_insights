@@ -30,12 +30,15 @@ except Exception as e:
   st.stop()
 
 fday = all_data["Timestamp"].dt.date.min()
-lday = all_data["Timestamp"].dt.date.max() + datetime.timedelta(days=1)
+lday = all_data["Timestamp"].dt.date.max()
 
-dayrange = st.slider("Date Range", min_value=fday, max_value=lday, value=(fday, lday))
-# dayrange = st.date_input("Date Range", min_value=fday, max_value=lday, value=(fday, lday))
+dayrange = st.date_input("Date Range", min_value=fday, max_value=lday, value=(fday, lday))
 
-data = all_data.loc[(all_data["Timestamp"] >= pd.Timestamp(dayrange[0])) & (all_data["Timestamp"] < pd.Timestamp(dayrange[1]))]
+try:
+  data = all_data.loc[(all_data["Timestamp"] >= pd.Timestamp(dayrange[0])) & (all_data["Timestamp"] <= pd.Timestamp(dayrange[1]))]
+except IndexError as e:
+  st.warning(f"Select a valid date range between {fday} and {lday}")
+  st.stop()
 
 data.columns = [c.replace(" ", "_") for c in data.columns]
 bywiki = data.groupby(["Wiki"]).agg("sum").reset_index()
