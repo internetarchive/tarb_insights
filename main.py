@@ -54,6 +54,17 @@ cols[2].metric("Link Edits", f"{bywiki['TotalLinks'].sum():,}", f"{byday['TotalL
 with st.expander("Edits Summary"):
   st.table(pd.concat([byday.sum(numeric_only=True), byday.tail(1).sum(numeric_only=True)], axis=1, keys=["All_Time", "Last_Day"]).astype(int))
 
+"## Last 30 Days on All Wikis"
+c = alt.Chart(byday.tail(30)).mark_bar().encode(
+  x="yearmonthdate(Timestamp):T",
+  y="TotalLinks:Q",
+  tooltip=["yearmonthdate(Timestamp)", alt.Tooltip("TotalLinks", format=",")]
+)
+st.altair_chart(c, use_container_width=True)
+
+with st.expander("30 Days Edits"):
+  st.write(byday.tail(30))
+
 "## Monthly Links Edits on All Wikis"
 c = alt.Chart(bymonth).mark_bar().encode(
   x="yearmonth(YearMonth):T",
