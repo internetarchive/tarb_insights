@@ -56,9 +56,9 @@ with st.expander("Edits Summary"):
 
 "## Last 30 Days on All Wikis"
 c = alt.Chart(byday.tail(30)).mark_bar().encode(
-  x="yearmonthdate(Timestamp):T",
+  x=alt.X("yearmonthdate(Timestamp):T", title="Day"),
   y="TotalLinks:Q",
-  tooltip=["yearmonthdate(Timestamp)", alt.Tooltip("TotalLinks", format=",")]
+  tooltip=[alt.Tooltip("yearmonthdate(Timestamp)", title="Day"), alt.Tooltip("TotalLinks", format=",")]
 )
 st.altair_chart(c, use_container_width=True)
 
@@ -67,9 +67,9 @@ with st.expander("30 Days Edits"):
 
 "## Monthly Links Edits on All Wikis"
 c = alt.Chart(bymonth).mark_bar().encode(
-  x="yearmonth(YearMonth):T",
+  x=alt.X("yearmonth(YearMonth):T", title="Month"),
   y="TotalLinks:Q",
-  tooltip=["yearmonth(YearMonth)", alt.Tooltip("TotalLinks", format=",")]
+  tooltip=[alt.Tooltip("yearmonth(YearMonth)", title="Month"), alt.Tooltip("TotalLinks", format=",")]
 )
 st.altair_chart(c, use_container_width=True)
 
@@ -81,7 +81,7 @@ with st.expander("Per Month Edits"):
 selected_wikis = st.multiselect("Select Wikis to compare:", bywiki["Wiki"], default=["enwiki"])
 sw = data[data["Wiki"].isin(selected_wikis)].groupby(["Wiki", "YearMonth"]).agg("sum").reset_index()
 c = alt.Chart(sw).mark_line().encode(
-  x="yearmonth(YearMonth):T",
+  x=alt.X("yearmonth(YearMonth):T", title="Month"),
   y="TotalLinks:Q",
   color="Wiki:N",
   strokeDash="Wiki:N"
