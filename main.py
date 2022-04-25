@@ -51,6 +51,11 @@ cols[0].metric("Wikis", f"{len(bywiki):,}", f"{daily_wikis.values[-1]:,}", delta
 cols[1].metric("Page Edits", f"{bywiki['TotalEdits'].sum():,}", f"{byday['TotalEdits'].values[-1]:,}")
 cols[2].metric("Link Edits", f"{bywiki['TotalLinks'].sum():,}", f"{byday['TotalLinks'].values[-1]:,}")
 
+cols = st.columns(3)
+cols[0].metric("Tagged Links", f"{bywiki['TagLinks'].sum():,}", f"{byday['TagLinks'].values[-1]:,}")
+cols[1].metric("Fixed Dead Links", f"{bywiki['DeadLinks'].sum():,}", f"{byday['DeadLinks'].values[-1]:,}")
+cols[2].metric("Added Archive URLs", f"{bywiki['LiveLinks'].sum()+bywiki['DeadLinks'].sum():,}", f"{byday['LiveLinks'].values[-1]+byday['DeadLinks'].values[-1]:,}")
+
 with st.expander("Edits Summary"):
   st.table(pd.concat([byday.sum(numeric_only=True), byday.tail(1).sum(numeric_only=True)], axis=1, keys=["All_Time", "Last_Day"]).astype(int))
 
