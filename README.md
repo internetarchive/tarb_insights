@@ -2,7 +2,7 @@
 
 This is a [Streamlit](https://streamlit.io/) application to visualize [Wikipedia InternetArchiveBot](https://meta.wikimedia.org/wiki/InternetArchiveBot/API#action=statistics) and [Turn All References Blue (TARB)](https://archive.org/details/mark-graham-presentation) project statistics.
 
-To run it locally (in Docker), clode this repository and build a docker image:
+To run it locally (in Docker), clone this repository and build a docker image:
 
 ```
 $ docker image build -t tarbinsights .
