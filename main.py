@@ -47,6 +47,8 @@ bymonth = data.groupby(["YearMonth"]).agg("sum").reset_index()
 byday = data.groupby(["DateTime"]).agg("sum").reset_index()
 daily_wikis = data.groupby(["Timestamp"]).agg("count")["Wiki"]
 
+tt = [alt.Tooltip(f, format=",") for f in ["TotalLinks", "TotalEdits", "DeadEdits", "LiveLinks", "TagLinks", "ProactiveEdits", "ReactiveEdits", "UnknownEdits"]]
+
 cols = st.columns(3)
 cols[0].metric("Wikis", f"{len(bywiki):,}", f"{daily_wikis.values[-1]:,}", delta_color="off")
 cols[1].metric("Page Edits", f"{bywiki['TotalEdits'].sum():,}", f"{byday['TotalEdits'].values[-1]:,}")
@@ -64,7 +66,7 @@ with st.expander("Edits Summary"):
 c = alt.Chart(byday.tail(30)).mark_bar().encode(
   x=alt.X("yearmonthdate(DateTime):T", title="Day"),
   y="TotalLinks:Q",
-  tooltip=[alt.Tooltip("yearmonthdate(DateTime)", title="Day"), alt.Tooltip("TotalLinks", format=",")]
+  tooltip=[alt.Tooltip("yearmonthdate(DateTime)", title="Day")] + tt
 )
 st.altair_chart(c, use_container_width=True)
 
@@ -75,7 +77,7 @@ with st.expander("Recent Daily Edits"):
 c = alt.Chart(bymonth).mark_bar().encode(
   x=alt.X("yearmonth(YearMonth):T", title="Month"),
   y="TotalLinks:Q",
-  tooltip=[alt.Tooltip("yearmonth(YearMonth)", title="Month"), alt.Tooltip("TotalLinks", format=",")]
+  tooltip=[alt.Tooltip("yearmonth(YearMonth)", title="Month")] + tt
 )
 st.altair_chart(c, use_container_width=True)
 
@@ -100,18 +102,17 @@ c = alt.Chart(recent).mark_rect().encode(
   x=alt.X("yearmonthdate(Timestamp):T", title="Day"),
   y="Wiki:O",
   color="TotalLinks:Q",
-  tooltip=[alt.Tooltip("yearmonthdate(Timestamp)", title="Day"), alt.Tooltip("Wiki"), alt.Tooltip("TotalLinks", format=",")]
+  tooltip=[alt.Tooltip("yearmonthdate(Timestamp)", title="Day"), "Wiki"] + tt
 ).properties(
   height=recent["Wiki"].nunique()*15
 )
 st.altair_chart(c, use_container_width=True)
 
 "## Total Links Edits on Each Wiki"
-tt = ["Wiki"] + [alt.Tooltip(f, format=",") for f in ["TotalLinks", "TotalEdits", "DeadEdits", "LiveLinks", "TagLinks", "ProactiveEdits", "ReactiveEdits", "UnknownEdits"]]
 c = alt.Chart(bywiki.sort_values(by=["TotalLinks"], ascending=False)).mark_bar().encode(
   x="TotalLinks:Q",
   y=alt.Y("Wiki:N", sort="-x"),
-  tooltip=tt
+  tooltip=["Wiki"] + tt
 ).properties(
   height=len(bywiki)*15
 )
