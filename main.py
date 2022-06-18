@@ -18,8 +18,9 @@ st.title(TITLE)
 @st.cache(ttl=3600, max_entries=1)
 def load_data():
   df =  pd.DataFrame(requests.get(STATSAPI).json()["statistics"])
-  df["Timestamp"]= pd.to_datetime(df["Timestamp"])
-  df["YearMonth"] = df["Timestamp"].dt.strftime("%Y-%m-15")
+  df["DateTime"] = df["Timestamp"].str[:10] + "T12:00:00Z"
+  df["YearMonth"] = df["Timestamp"].str[:8] + "15"
+  df["Timestamp"] = pd.to_datetime(df["Timestamp"])
   return df
 
 try:
@@ -43,7 +44,7 @@ except IndexError as e:
 data.columns = [c.replace(" ", "_") for c in data.columns]
 bywiki = data.groupby(["Wiki"]).agg("sum").reset_index()
 bymonth = data.groupby(["YearMonth"]).agg("sum").reset_index()
-byday = data.groupby(["Timestamp"]).agg("sum").reset_index()
+byday = data.groupby(["DateTime"]).agg("sum").reset_index()
 daily_wikis = data.groupby(["Timestamp"]).agg("count")["Wiki"]
 
 cols = st.columns(3)
@@ -61,9 +62,9 @@ with st.expander("Edits Summary"):
 
 "## Recent Daily Edits on All Wikis"
 c = alt.Chart(byday.tail(30)).mark_bar().encode(
-  x=alt.X("yearmonthdate(Timestamp):T", title="Day"),
+  x=alt.X("yearmonthdate(DateTime):T", title="Day"),
   y="TotalLinks:Q",
-  tooltip=[alt.Tooltip("yearmonthdate(Timestamp)", title="Day"), alt.Tooltip("TotalLinks", format=",")]
+  tooltip=[alt.Tooltip("yearmonthdate(DateTime)", title="Day"), alt.Tooltip("TotalLinks", format=",")]
 )
 st.altair_chart(c, use_container_width=True)
 
