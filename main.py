@@ -45,7 +45,7 @@ data.columns = [c.replace(" ", "_") for c in data.columns]
 bywiki = data.groupby(["Wiki"]).agg("sum").reset_index()
 bymonth = data.groupby(["YearMonth"]).agg("sum").reset_index()
 byday = data.groupby(["DateTime"]).agg("sum").reset_index()
-daily_wikis = data.groupby(["Timestamp"]).agg("count")["Wiki"]
+daily_wikis = data.groupby(["DateTime"]).agg("count")["Wiki"]
 
 tt = [alt.Tooltip(f, format=",") for f in ["TotalLinks", "TotalEdits", "DeadEdits", "LiveLinks", "TagLinks", "ProactiveEdits", "ReactiveEdits", "UnknownEdits"]]
 
@@ -99,10 +99,10 @@ st.altair_chart(c, use_container_width=True)
 "## Recent Daily Edits on Each Wiki"
 recent = data[data["Timestamp"].dt.date > lday - pd.to_timedelta("30day")]
 c = alt.Chart(recent).mark_rect().encode(
-  x=alt.X("yearmonthdate(Timestamp):T", title="Day"),
+  x=alt.X("yearmonthdate(DateTime):T", title="Day"),
   y="Wiki:O",
   color="TotalLinks:Q",
-  tooltip=[alt.Tooltip("yearmonthdate(Timestamp)", title="Day"), "Wiki"] + tt
+  tooltip=[alt.Tooltip("yearmonthdate(DateTime)", title="Day"), "Wiki"] + tt
 ).properties(
   height=recent["Wiki"].nunique()*15
 )
