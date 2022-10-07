@@ -12,7 +12,7 @@ TITLE = "TARB Insights"
 ICON = "https://archive.org/favicon.ico"
 STATSAPI = "https://iabot.toolforge.org/api.php?action=statistics&format=flat"
 
-st.set_page_config(page_title=TITLE, page_icon=ICON)
+st.set_page_config(page_title=TITLE, page_icon=ICON, layout="wide")
 st.title(TITLE)
 
 @st.cache(ttl=3600, max_entries=1)
@@ -47,7 +47,7 @@ bymonth = data.groupby(["YearMonth"]).agg("sum").reset_index()
 byday = data.groupby(["DateTime"]).agg("sum").reset_index()
 daily_wikis = data.groupby(["DateTime"]).agg("count")["Wiki"]
 
-tt = [alt.Tooltip(f, format=",") for f in ["TotalLinks", "TotalEdits", "DeadEdits", "LiveLinks", "TagLinks", "ProactiveEdits", "ReactiveEdits", "UnknownEdits"]]
+tt = [alt.Tooltip(f, format=",") for f in ["TotalLinks", "TotalEdits", "DeadLinks", "DeadEdits", "LiveLinks", "TagLinks", "ProactiveEdits", "ReactiveEdits", "UnknownEdits"]]
 
 cols = st.columns(3)
 cols[0].metric("Wikis", f"{len(bywiki):,}", f"{daily_wikis.values[-1]:,}", delta_color="off")
@@ -62,61 +62,92 @@ cols[2].metric("Added Archive URLs", f"{bywiki['LiveLinks'].sum()+bywiki['DeadLi
 with st.expander("Edits Summary"):
   st.table(pd.concat([byday.sum(numeric_only=True), byday.tail(1).sum(numeric_only=True)], axis=1, keys=["All_Time", "Last_Day"]).astype(int))
 
-"## Recent Daily Edits on All Wikis"
-c = alt.Chart(byday.tail(30)).mark_bar().encode(
-  x=alt.X("yearmonthdate(DateTime):T", title="Day"),
-  y="TotalLinks:Q",
-  tooltip=[alt.Tooltip("yearmonthdate(DateTime)", title="Day")] + tt
-)
-st.altair_chart(c, use_container_width=True)
 
-with st.expander("Recent Daily Edits"):
-  st.write(byday.tail(30))
+TABS = ["TotalLinks", "TotalEdits", "DeadLinks", "DeadEdits", "Data"]
+
+
+"## Recent Daily Edits on All Wikis"
+
+def recent_daily_edits_all_wikis(attr):
+  return alt.Chart(byday.tail(30)).mark_bar().encode(
+    x=alt.X("yearmonthdate(DateTime):T", title="Day"),
+    y=f"{attr}:Q",
+    tooltip=[alt.Tooltip("yearmonthdate(DateTime)", title="Day")] + tt
+  )
+
+tbs = st.tabs(TABS)
+for i, f in enumerate(TABS[:-1]):
+  tbs[i].altair_chart(recent_daily_edits_all_wikis(f), use_container_width=True)
+tbs[len(TABS)-1].write(byday.tail(30))
+
 
 "## Monthly Links Edits on All Wikis"
-c = alt.Chart(bymonth).mark_bar().encode(
-  x=alt.X("yearmonth(YearMonth):T", title="Month"),
-  y="TotalLinks:Q",
-  tooltip=[alt.Tooltip("yearmonth(YearMonth)", title="Month")] + tt
-)
-st.altair_chart(c, use_container_width=True)
 
-with st.expander("Per Month Edits"):
-  bymonth["YearMonth"] = bymonth["YearMonth"].str[:7]
-  st.write(bymonth)
+def monthly_edits_all_wikis(attr):
+  return alt.Chart(bymonth).mark_bar().encode(
+    x=alt.X("yearmonth(YearMonth):T", title="Month"),
+    y=f"{attr}:Q",
+    tooltip=[alt.Tooltip("yearmonth(YearMonth)", title="Month")] + tt
+  )
+
+tbs = st.tabs(TABS)
+for i, f in enumerate(TABS[:-1]):
+  tbs[i].altair_chart(monthly_edits_all_wikis(f), use_container_width=True)
+bymonth["YearMonth"] = bymonth["YearMonth"].str[:7]
+tbs[len(TABS)-1].write(bymonth)
+
 
 "## Monthly Links Edits on Selected Wikis"
+
 selected_wikis = st.multiselect("Select Wikis to compare:", bywiki["Wiki"], default=["enwiki"])
 sw = data[data["Wiki"].isin(selected_wikis)].groupby(["Wiki", "YearMonth"]).agg("sum").reset_index()
-c = alt.Chart(sw).mark_line().encode(
-  x=alt.X("yearmonth(YearMonth):T", title="Month"),
-  y="TotalLinks:Q",
-  color="Wiki:N",
-  strokeDash="Wiki:N"
-)
-st.altair_chart(c, use_container_width=True)
+
+def monthly_edits_selected_wikis(attr):
+  return alt.Chart(sw).mark_line().encode(
+    x=alt.X("yearmonth(YearMonth):T", title="Month"),
+    y=f"{attr}:Q",
+    color="Wiki:N",
+    strokeDash="Wiki:N"
+  )
+
+tbs = st.tabs(TABS)
+for i, f in enumerate(TABS[:-1]):
+  tbs[i].altair_chart(monthly_edits_selected_wikis(f), use_container_width=True)
+tbs[len(TABS)-1].write(sw)
+
 
 "## Recent Daily Edits on Each Wiki"
+
 recent = data[data["Timestamp"].dt.date > lday - pd.to_timedelta("30day")]
-c = alt.Chart(recent).mark_rect().encode(
-  x=alt.X("yearmonthdate(DateTime):T", title="Day"),
-  y="Wiki:O",
-  color="TotalLinks:Q",
-  tooltip=[alt.Tooltip("yearmonthdate(DateTime)", title="Day"), "Wiki"] + tt
-).properties(
-  height=recent["Wiki"].nunique()*15
-)
-st.altair_chart(c, use_container_width=True)
+
+def recent_daily_edits_each_wiki(attr):
+  return alt.Chart(recent).mark_rect().encode(
+    x=alt.X("yearmonthdate(DateTime):T", title="Day"),
+    y="Wiki:O",
+    color=alt.Color(f"{attr}:Q", scale=alt.Scale(type="symlog")),
+    tooltip=[alt.Tooltip("yearmonthdate(DateTime)", title="Day"), "Wiki"] + tt
+  ).properties(
+    height=recent["Wiki"].nunique()*15
+  )
+
+tbs = st.tabs(TABS)
+for i, f in enumerate(TABS[:-1]):
+  tbs[i].altair_chart(recent_daily_edits_each_wiki(f), use_container_width=True)
+tbs[len(TABS)-1].write(recent)
+
 
 "## Total Links Edits on Each Wiki"
-c = alt.Chart(bywiki.sort_values(by=["TotalLinks"], ascending=False)).mark_bar().encode(
-  x="TotalLinks:Q",
-  y=alt.Y("Wiki:N", sort="-x"),
-  tooltip=["Wiki"] + tt
-).properties(
-  height=len(bywiki)*15
-)
-st.altair_chart(c, use_container_width=True)
 
-with st.expander("Per Wiki Edits"):
-  st.write(bywiki)
+def total_edits_each_wiki(attr):
+  return alt.Chart(bywiki.sort_values(by=[attr], ascending=False)).mark_bar().encode(
+    x=f"{attr}:Q",
+    y=alt.Y("Wiki:N", sort="-x"),
+    tooltip=["Wiki"] + tt
+  ).properties(
+    height=len(bywiki)*15
+  )
+
+tbs = st.tabs(TABS)
+for i, f in enumerate(TABS[:-1]):
+  tbs[i].altair_chart(total_edits_each_wiki(f), use_container_width=True)
+tbs[len(TABS)-1].write(bywiki)
