@@ -10,18 +10,27 @@ import pandas as pd
 
 TITLE = "TARB Insights"
 ICON = "https://archive.org/favicon.ico"
-STATSAPI = "https://iabot.toolforge.org/api.php?action=statistics&format=flat"
+STATSAPI = "https://iabot.toolforge.org/api.php?action=statistics&format=flat&only-year={}"
+STRYEAR = 2016
+ENDYEAR = datetime.date.today().year
 
 st.set_page_config(page_title=TITLE, page_icon=ICON, layout="wide")
 st.title(TITLE)
 
-@st.cache(ttl=3600, max_entries=1)
-def load_data():
-  df =  pd.DataFrame(requests.get(STATSAPI).json()["statistics"])
+def load_yearly_data(year):
+  df =  pd.DataFrame(requests.get(STATSAPI.format(year)).json()["statistics"])
   df["DateTime"] = df["Timestamp"].str[:10] + "T12:00:00Z"
   df["YearMonth"] = df["Timestamp"].str[:8] + "15"
   df["Timestamp"] = pd.to_datetime(df["Timestamp"])
   return df
+
+@st.cache(show_spinner=False)
+def cached_yearly_data(year):
+  return load_yearly_data(year)
+
+@st.cache(ttl=3600, max_entries=1)
+def load_data():
+  return pd.concat([cached_yearly_data(y) for y in range(STRYEAR, ENDYEAR)] + [load_yearly_data(ENDYEAR)])
 
 try:
   all_data = load_data()
