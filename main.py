@@ -10,7 +10,7 @@ import pandas as pd
 
 TITLE = "TARB Insights"
 ICON = "https://archive.org/favicon.ico"
-STATSAPI = "https://iabot.toolforge.org/api.php?action=statistics&format=flat&only-year={}"
+STATSAPI = "https://iabot.wmcloud.org/api.php?action=statistics&format=flat&only-year={}"
 STRYEAR = 2016
 ENDYEAR = datetime.date.today().year
 
