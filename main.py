@@ -42,15 +42,14 @@ except Exception as e:
 fday = all_data["Timestamp"].dt.date.min()
 lday = all_data["Timestamp"].dt.date.max()
 
-qp = st.experimental_get_query_params()
+qp = st.query_params
+sday = datetime.datetime.strptime(qp.start, "%Y-%m-%d").date() if "start" in qp else fday
+eday = datetime.datetime.strptime(qp.end, "%Y-%m-%d").date() if "end" in qp else lday
 
-sday = datetime.datetime.strptime(qp.get("start")[0], "%Y-%m-%d").date() if qp.get("start") else fday
-eday = datetime.datetime.strptime(qp.get("end")[0], "%Y-%m-%d").date() if qp.get("end") else lday
-
-#dayrange = st.date_input("Date Range", min_value=fday, max_value=lday, value=(fday, lday))
 dayrange = st.slider("Date Range", min_value=fday, max_value=lday, value=(sday, eday), key="range")
 
-st.experimental_set_query_params(start=dayrange[0], end=dayrange[1])
+qp.start=dayrange[0]
+qp.end=dayrange[1]
 
 try:
   data = all_data.loc[(all_data["Timestamp"] >= pd.Timestamp(dayrange[0])) & (all_data["Timestamp"] <= pd.Timestamp(dayrange[1]))]
