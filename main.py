@@ -24,11 +24,11 @@ def load_yearly_data(year):
   df["Timestamp"] = pd.to_datetime(df["Timestamp"])
   return df
 
-@st.cache(show_spinner=False)
+@st.cache_data(show_spinner=False)
 def cached_yearly_data(year):
   return load_yearly_data(year)
 
-@st.cache(ttl=3600, max_entries=1)
+@st.cache_data(ttl=3600, max_entries=1)
 def load_data():
   return pd.concat([cached_yearly_data(y) for y in range(STRYEAR, ENDYEAR)] + [load_yearly_data(ENDYEAR)])
 
@@ -42,7 +42,15 @@ except Exception as e:
 fday = all_data["Timestamp"].dt.date.min()
 lday = all_data["Timestamp"].dt.date.max()
 
-dayrange = st.date_input("Date Range", min_value=fday, max_value=lday, value=(fday, lday))
+qp = st.experimental_get_query_params()
+
+sday = datetime.datetime.strptime(qp.get("start")[0], "%Y-%m-%d").date() if qp.get("start") else fday
+eday = datetime.datetime.strptime(qp.get("end")[0], "%Y-%m-%d").date() if qp.get("end") else lday
+
+#dayrange = st.date_input("Date Range", min_value=fday, max_value=lday, value=(fday, lday))
+dayrange = st.slider("Date Range", min_value=fday, max_value=lday, value=(sday, eday), key="range")
+
+st.experimental_set_query_params(start=dayrange[0], end=dayrange[1])
 
 try:
   data = all_data.loc[(all_data["Timestamp"] >= pd.Timestamp(dayrange[0])) & (all_data["Timestamp"] <= pd.Timestamp(dayrange[1]))]
@@ -51,9 +59,9 @@ except IndexError as e:
   st.stop()
 
 data.columns = [c.replace(" ", "_") for c in data.columns]
-bywiki = data.groupby(["Wiki"]).agg("sum").reset_index()
-bymonth = data.groupby(["YearMonth"]).agg("sum").reset_index()
-byday = data.groupby(["DateTime"]).agg("sum").reset_index()
+bywiki = data.groupby(["Wiki"]).agg("sum", numeric_only=True).reset_index()
+bymonth = data.groupby(["YearMonth"]).agg("sum", numeric_only=True).reset_index()
+byday = data.groupby(["DateTime"]).agg("sum", numeric_only=True).reset_index()
 daily_wikis = data.groupby(["DateTime"]).agg("count")["Wiki"]
 
 tt = [alt.Tooltip(f, format=",") for f in ["TotalLinks", "TotalEdits", "DeadLinks", "DeadEdits", "LiveLinks", "TagLinks", "ProactiveEdits", "ReactiveEdits", "UnknownEdits"]]
@@ -109,7 +117,7 @@ tbs[len(TABS)-1].write(bymonth)
 "## Monthly Links Edits on Selected Wikis"
 
 selected_wikis = st.multiselect("Select Wikis to compare:", bywiki["Wiki"], default=["enwiki"])
-sw = data[data["Wiki"].isin(selected_wikis)].groupby(["Wiki", "YearMonth"]).agg("sum").reset_index()
+sw = data[data["Wiki"].isin(selected_wikis)].groupby(["Wiki", "YearMonth"]).agg("sum", numeric_only=True).reset_index()
 
 def monthly_edits_selected_wikis(attr):
   return alt.Chart(sw).mark_line().encode(
@@ -136,7 +144,7 @@ def recent_daily_edits_each_wiki(attr):
     color=alt.Color(f"{attr}:Q", scale=alt.Scale(type="symlog")),
     tooltip=[alt.Tooltip("yearmonthdate(DateTime)", title="Day"), "Wiki"] + tt
   ).properties(
-    height=recent["Wiki"].nunique()*15
+    height=recent["Wiki"].nunique()*21
   )
 
 tbs = st.tabs(TABS)
@@ -153,7 +161,7 @@ def total_edits_each_wiki(attr):
     y=alt.Y("Wiki:N", sort="-x"),
     tooltip=["Wiki"] + tt
   ).properties(
-    height=len(bywiki)*15
+    height=len(bywiki)*21
   )
 
 tbs = st.tabs(TABS)
