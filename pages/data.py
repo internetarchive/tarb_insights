@@ -290,6 +290,10 @@ if mode != "Custom Query":
   st.code(qry, language="sql")
 
 try:
-  st.dataframe(sqlq(qry, ttl=ttl), use_container_width=True)
+  df = sqlq(qry, ttl=ttl)
+  objc = list(df.select_dtypes(["object"]).columns)
+  if objc:
+    df[objc] = df[objc].astype(str)
+  st.dataframe(df, use_container_width=True)
 except Exception as e:
   st.error(e)
