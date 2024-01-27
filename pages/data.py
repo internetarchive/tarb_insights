@@ -222,6 +222,7 @@ Based on the MariaDB database description above, write a read-only SQL query to 
 
 NOTE:
 
+* Convert any columns with the `blob` type to `urf8` if they are part of the final result.
 * Do not assume additional fields exist if given a question that can't be answered with the above mentioned fields.
 * If you need to use any of the `externallinks_*` tables for your answer and no wiki was specified in the question, you may assume the default wiki to be the English Wikipedia (i.e., `enwiki`).
 * If the question is unclear or it cannot be answered using the above MariaDB table then ask for more details and describe limitations, but DO NOT attempt to produce a vague query, instead, simply explain why the query can't be answered.
