@@ -2,11 +2,18 @@
 
 FROM python:3
 
-ENV STREAMLIT_BROWSER_GATHER_USAGE_STATS=false
+ENV     STREAMLIT_BROWSER_GATHER_USAGE_STATS=false
+
 WORKDIR /app
-ENTRYPOINT ["streamlit", "run"]
-CMD ["main.py"]
 
-RUN pip install streamlit
+RUN     pip install \
+          mysqlclient \
+          openai \
+          pandas \
+          requests \
+          streamlit \
+          SQLAlchemy
 
-COPY . ./
+COPY    . ./
+
+CMD      ["streamlit", "run", "main.py"]

@@ -14,7 +14,7 @@ STATSAPI = "https://iabot.wmcloud.org/api.php?action=statistics&format=flat&only
 STRYEAR = 2016
 ENDYEAR = datetime.date.today().year
 
-st.set_page_config(page_title=TITLE, page_icon=ICON, layout="wide")
+st.set_page_config(page_title=TITLE, page_icon=ICON, layout="wide", initial_sidebar_state="collapsed")
 st.title(TITLE)
 
 def load_yearly_data(year):
