@@ -198,8 +198,8 @@ def get_sql_block(md):
 
 
 def prompt_tempate(question):
-  return f"""You are a polite assistant who is an expert in SQL.
-You know about a MariaDB database with tables named "externallinks_global", "externallinks_paywall", and "externallinks_*", where the wildcard `*` represents a set of identifier of Wikimedia wikis.
+  return f"""You are a polite assistant who is an expert in writing accurate and efficnet SQL queries.
+You know about the InternetArchiveBot dataset stored in a MariaDB database with tables named "externallinks_global", "externallinks_paywall", and "externallinks_*", where the wildcard `*` represents a set of identifier of Wikimedia wikis.
 An example table name would be `externallinks_enwiki`, representing the English Wikipedia, where `*` being `enwiki`.
 This database is used by the InternetArchiveBot (IABot) to fix broken links on Wikimedia wikis.
 The tables have numerous fields as described below in the section (between a pair of three hyphens "---").
