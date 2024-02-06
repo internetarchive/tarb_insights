@@ -76,8 +76,8 @@ This is a read-only interactive explorer of the database that powers the IABot t
 Read the documentation below to learn more about the database schema for crafting your SQL queries.
 To prevent from any abuse of the system we are currently requiring an access token to enable custom queries.
 We plan to make periodic SQL dumps available for download.
-
-Email us at info@archive.org for any questions or feedback."""
+Email us at info@archive.org for any questions or feedback.
+"""
 
 DOCS = f"""
 ## A Database of URLs Referenced in Wikipedia Articles
@@ -175,7 +175,7 @@ conn = st.connection("mysql", type="sql")
 
 
 def sqlq(qry, ttl=600):
-  return conn.query(qry, ttl=ttl, show_spinner="Running SQL query...")
+  return conn.query(qry, ttl=ttl, show_spinner="Running SQL query... Patience is gold!")
 
 
 def get_page_id(title, lang="en"):
@@ -234,60 +234,55 @@ st.info(INFO)
 with st.expander("Documentation"):
   st.markdown(DOCS)
 
+cc = st.container(height=250, border=True)
+
 with st.sidebar:
-  mode = st.radio("Query Mode", ["Sample Queries", "Custom Query", "Query CoPilot"])
+  mode = st.radio("Query Mode", ["Sample Queries", "Custom Query"])
 
 qry = ""
-ttl = 0
+ttl = 600
 
 if mode == "Sample Queries":
-  smpl = st.radio("Select a sample query", SAMPLES, captions=[c[0] for c in SAMPLES.values()])
+  smpl = cc.radio("Select a sample query", SAMPLES, captions=[c[0] for c in SAMPLES.values()])
   qry = SAMPLES[smpl][1]
+  st.code(qry, language="sql")
   ttl = 3600
 
 if mode == "Custom Query":
   if ss.get("TOKEN") != st.secrets.get("ACCESS_TOKEN"):
-    tkn = st.text_input("Access token", type="password", key="tkn", placeholder="Enter a valid access token to enable custom queries.", help="Email us at info@archive.org for an access token.")
+    cc.chat_message("assistant").write("Custom queries require an access token. Email us at info@archive.org to get one.")
+    with st.sidebar:
+      tkn = st.text_input("Access Token", type="password", key="tkn", placeholder="Enter a valid access token.", help="Custom queries require an access token.  \nEmail us at info@archive.org to get one.")
     if tkn.strip():
       if tkn != st.secrets.get("ACCESS_TOKEN"):
-        st.error("Invalid access token!")
+        st.sidebar.error("Invalid access token!")
       else:
         ss.TOKEN = tkn
         st.rerun()
     st.stop()
-  qry = st.text_area("Enter a custom SQL query", value=ss.get("cq"), height=200, key="cq", placeholder="DESCRIBE externallinks_global;")
+  cc.chat_message("assistant").write("Write an SQL query below to explore the dataset or ask a question about it and let the AI Copilot draft a query for you.")
 
-if mode == "Query CoPilot":
-  client = OpenAI()
-  cc = st.container(height=400, border=True)
   if "history" not in ss:
-    ss["history"] = [{"role": "assistant", "content": "Ask a question about the dataset and let the AI Copilot write SQL queries for you."}]
+    ss["history"] = []
   for msg in ss.history:
     cc.chat_message(msg["role"]).write(msg["content"])
-  if prompt := st.chat_input(f"Example: {random.choice(EXAMPLES)}"):
+  if prompt := st.container().chat_input(f"May I help? (e.g., {random.choice(EXAMPLES)})"):
     ss.history.append({"role": "user", "content": prompt})
     cc.chat_message("user").write(prompt)
-    if prompt.startswith("/id "):
-      res = "Failed to retrieve the page ID!"
-      if pgid := get_page_id(prompt[4:].strip()):
-        res = f"Page ID: `{pgid}`"
-      cc.chat_message("assistant").write(res)
-    else:
-      with cc.chat_message("assistant"):
-        ph = st.empty()
-        res = ""
-        for r in client.chat.completions.create(model="gpt-3.5-turbo", messages=[{"role": "user", "content": prompt_tempate(prompt)}], stream=True):
-          res += (r.choices[0].delta.content or "")
-          ph.write(res + "▌")
-        ph.write(res)
-    ss.history.append({"role": "assistant", "content": res})
-    qry = get_sql_block(res)
+    client = OpenAI()
+    res = ""
+    with cc.chat_message("assistant"):
+      stream = client.chat.completions.create(model="gpt-3.5-turbo", messages=[{"role": "user", "content": prompt_tempate(prompt)}], stream=True)
+      res = st.write_stream(stream)
+    if res:
+      ss.history.append({"role": "assistant", "content": res})
+      ss.cq = get_sql_block(res)
+  qry = st.text_area("SQL Query", height=200, key="cq", placeholder="Write an SQL query to execute.")
+  if not st.button("Run Query", type="primary"):
+    st.stop()
 
 if not qry:
   st.stop()
-
-if mode != "Custom Query":
-  st.code(qry, language="sql")
 
 try:
   df = sqlq(qry, ttl=ttl)
