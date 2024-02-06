@@ -157,7 +157,7 @@ SAMPLES = {
   "Total URLs count": (
     "Unique number of URLs known to the IABot from all wikis.",
     """
-    SELECT COUNT(*)
+    SELECT COUNT(*) AS total_urls
     FROM externallinks_global;
     """
   ),
