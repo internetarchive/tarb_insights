@@ -289,6 +289,9 @@ try:
   objc = list(df.select_dtypes(["object"]).columns)
   if objc:
     df[objc] = df[objc].astype(str)
-  st.dataframe(df, use_container_width=True)
+  if df.shape == (1, 1) and "int" in str(df.dtypes[0]):
+    st.metric(df.columns[0], f"{int(df.values):,}")
+  else:
+    st.dataframe(df, use_container_width=True)
 except Exception as e:
   st.error(e)
