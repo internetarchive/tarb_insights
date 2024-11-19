@@ -1,8 +1,10 @@
 #!/usr/bin/env -S docker image build -t tarbinsights . -f
 
-FROM python:3
+FROM    python:3
 
 ENV     STREAMLIT_BROWSER_GATHER_USAGE_STATS=false
+
+RUN     adduser --disabled-password --gecos "" appuser
 
 WORKDIR /app
 
@@ -14,6 +16,8 @@ RUN     pip install \
           streamlit \
           SQLAlchemy
 
-COPY    . ./
+COPY    --chown=appuser:appuser . ./
 
-CMD      ["streamlit", "run", "main.py"]
+USER    appuser
+
+CMD     ["streamlit", "run", "main.py"]
