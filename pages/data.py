@@ -250,12 +250,12 @@ if mode == "Sample Queries":
   ttl = 3600
 
 if mode == "Custom Query":
-  if ss.get("TOKEN") != st.secrets.get("ACCESS_TOKEN"):
+  if ss.get("TOKEN") != os.getenv("ACCESS_TOKEN"):
     cc.chat_message("assistant").write("Custom queries require an access token. Email us at info@archive.org to get one.")
     with st.sidebar:
       tkn = st.text_input("Access Token", type="password", key="tkn", placeholder="Enter a valid access token.", help="Custom queries require an access token.  \nEmail us at info@archive.org to get one.")
     if tkn.strip():
-      if tkn != st.secrets.get("ACCESS_TOKEN"):
+      if tkn != os.getenv("ACCESS_TOKEN"):
         st.sidebar.error("Invalid access token!")
       else:
         ss.TOKEN = tkn
