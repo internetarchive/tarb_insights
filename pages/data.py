@@ -171,7 +171,7 @@ EXAMPLES = [
 SQLRE = re.compile(r"```(sql)?\s*(.*?)\s*```", re.DOTALL | re.MULTILINE)
 PGIRE = re.compile(r"get_page_id\(.*?\)")
 ss = st.session_state
-conn = st.connection("mysql", type="sql")
+conn = st.connection("mysql", type="sql", url=os.getenv("DBURL"))
 
 
 def sqlq(qry, ttl=600):
