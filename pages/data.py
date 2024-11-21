@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import ast
 import datetime
 import os
 import random
@@ -184,11 +185,17 @@ def get_page_id(title, lang="en"):
     res = requests.get(f"https://{lang}.wikipedia.org/w/api.php?action=query&format=json&titles={title.replace(' ', '%20')}").json()
     return list(res["query"]["pages"])[0]
   except:
-    return None
+    return "-1"
 
 
 def replacer(m):
-  return id if (id := eval(m.group(0))) else "-1"
+  try:
+    pf = ast.parse(m.group(0)).body[0].value
+  except SyntaxError as e:
+    return m.group(0)
+  if pf.func.id == "get_page_id" and len(pf.args) == 2:
+    return get_page_id(pf.args[0].value, pf.args[1].value)
+  return "-1"
 
 
 def get_sql_block(md):
