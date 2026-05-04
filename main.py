@@ -24,7 +24,7 @@ def load_yearly_data(year):
   df["Timestamp"] = pd.to_datetime(df["Timestamp"])
   return df
 
-@st.cache_data(show_spinner=False)
+@st.cache_data(ttl=2592000, show_spinner=False)
 def cached_yearly_data(year):
   return load_yearly_data(year)
 
